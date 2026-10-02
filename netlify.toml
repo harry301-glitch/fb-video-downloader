@@ -1,0 +1,24 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/facebook-video"
+  to = "/.netlify/functions/facebook-video"
+  status = 200
+
+[[redirects]]
+  from = "/api/download-video"
+  to = "/.netlify/functions/download-video"
+  status = 200
+
+[[redirects]]
+  from = "/api/download"
+  to = "/.netlify/functions/download-video"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
