@@ -39,8 +39,8 @@ export function HomePage() {
   return (
     <div className="flex flex-col min-h-screen">
       <SEOHead
-        title="Facebook Video Downloader – Download Facebook Videos Online"
-        description="Download publicly accessible Facebook videos online with our fast and easy Facebook Video Downloader."
+        title="Facebook Video Downloader – Download Facebook Videos Online in HD"
+        description="Fast, reliable online Facebook Video Downloader. Download Facebook videos in genuine HD 1080p, 720p and SD MP4 formats with audio. Free, mobile-friendly utility."
         schema={getFaqSchema(FAQ_DATA)}
       />
 
@@ -180,6 +180,15 @@ export function HomePage() {
               </p>
               <p>
                 Once copied, navigate to our website, paste the link into the designated field, and click <strong>Download</strong>. Our system will analyze the URL, check for public stream availability, and provide clean direct download links for the highest available resolution.
+              </p>
+            </div>
+
+            <div className="pt-6 border-t border-slate-200">
+              <h3 className="text-xl font-bold text-slate-900 mb-2">
+                Facebook Video Downloader HD: Genuine Quality Without Recompression
+              </h3>
+              <p className="text-slate-700 leading-relaxed text-sm sm:text-base">
+                When you <strong>download Facebook videos online</strong>, preserving visual clarity and crisp audio is essential. Our engine detects genuine source resolutions, providing <strong>1080p Full HD</strong> or <strong>720p HD</strong> whenever published by the creator, with seamless <strong>SD fallback</strong> when higher resolutions are not available. We never artificially upscale low-quality streams or recompress files, ensuring you download the original source video with full audio fidelity.
               </p>
             </div>
           </div>

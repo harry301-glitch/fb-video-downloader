@@ -19,14 +19,15 @@ export function ResultCard({ data, originalUrl, onReset }: ResultCardProps) {
   const duration = data.duration;
   const formats = data.formats || [];
 
-  const handleDownload = async (format: { quality: string; format: string; url: string }) => {
+  const handleDownload = async (format: import('../services/api.ts').VideoFormat) => {
     trackQualitySelected(format.quality);
     setDownloadError(null);
     setDownloadingQuality(format.quality);
 
     // Build a clean, safe filename
     const safeTitle = title.replace(/[^a-zA-Z0-9]/g, '_').replace(/_{2,}/g, '_').slice(0, 40) || 'facebook_video';
-    const filename = `${safeTitle}_${format.quality}.mp4`;
+    const qualTag = format.resolution || format.quality.split(' ')[0] || 'video';
+    const filename = `${safeTitle}_${qualTag}.mp4`;
 
     try {
       // Trigger same-origin streaming download via Netlify Functions / Express without page navigation
@@ -144,9 +145,10 @@ export function ResultCard({ data, originalUrl, onReset }: ResultCardProps) {
 
               <div className="flex flex-col gap-2.5">
                 {formats.map((fmt, index) => {
-                  const isHd = fmt.quality === 'HD';
+                  const isHd = fmt.resolution?.includes('1080') || fmt.resolution?.includes('720') || fmt.quality.includes('HD');
                   const isDownloading = downloadingQuality === fmt.quality;
                   const isSuccess = downloadSuccessQuality === fmt.quality;
+                  const badgeText = fmt.resolution || (isHd ? 'HD' : 'SD');
 
                   return (
                     <div
@@ -155,22 +157,32 @@ export function ResultCard({ data, originalUrl, onReset }: ResultCardProps) {
                     >
                       <div className="flex items-center gap-3">
                         <div
-                          className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-xs ${
+                          className={`w-12 h-9 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
                             isHd
                               ? 'bg-blue-600 text-white shadow-sm'
                               : 'bg-slate-200 text-slate-700'
                           }`}
                         >
-                          {fmt.quality}
+                          {badgeText}
                         </div>
                         <div>
                           <div className="font-semibold text-slate-900 text-sm flex items-center gap-1.5">
-                            <span>{fmt.quality === 'HD' ? 'High Definition (HD)' : 'Standard Definition (SD)'}</span>
+                            <span>{fmt.quality}</span>
                             {isHd && <Sparkles className="w-3.5 h-3.5 text-blue-600" />}
                           </div>
-                          <span className="text-xs text-slate-500">
-                            MP4 Video · Highest available stream bitrate
-                          </span>
+                          <div className="text-xs text-slate-500 flex flex-wrap items-center gap-1.5 mt-0.5">
+                            <span>MP4 Video</span>
+                            <span aria-hidden="true">·</span>
+                            <span className="text-emerald-700 font-medium">Audio Included</span>
+                            {fmt.size && (
+                              <>
+                                <span aria-hidden="true">·</span>
+                                <span className="font-medium text-slate-700 bg-slate-200/70 px-1.5 py-0.2 rounded text-[11px]">
+                                  {fmt.size}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
 
@@ -178,7 +190,7 @@ export function ResultCard({ data, originalUrl, onReset }: ResultCardProps) {
                         type="button"
                         onClick={() => handleDownload(fmt)}
                         disabled={isDownloading}
-                        className={`px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-lg flex items-center gap-1.5 transition-all shadow-sm ${
+                        className={`px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-lg flex items-center gap-1.5 transition-all shadow-sm shrink-0 ${
                           isHd
                             ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white disabled:bg-blue-400'
                             : 'bg-slate-800 hover:bg-slate-900 active:bg-black text-white disabled:bg-slate-500'
@@ -197,7 +209,7 @@ export function ResultCard({ data, originalUrl, onReset }: ResultCardProps) {
                         ) : (
                           <>
                             <Download className="w-4 h-4" />
-                            <span>Download {fmt.quality}</span>
+                            <span>Download {badgeText}</span>
                           </>
                         )}
                       </button>

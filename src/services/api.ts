@@ -3,9 +3,12 @@
  */
 
 export interface VideoFormat {
-  quality: 'HD' | 'SD';
+  quality: string;
+  resolution?: string;
   format: 'MP4';
   url: string;
+  size?: string;
+  hasAudio?: boolean;
 }
 
 export interface VideoExtractionResponse {

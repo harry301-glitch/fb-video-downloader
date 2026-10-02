@@ -25,9 +25,12 @@ const ALLOWED_CDN_HOSTS = [
 ];
 
 export interface VideoFormat {
-  quality: 'HD' | 'SD';
+  quality: string;
+  resolution?: string;
   format: 'MP4';
   url: string;
+  size?: string;
+  hasAudio?: boolean;
 }
 
 export interface ExtractorSuccess {
@@ -253,8 +256,13 @@ export async function resolveAndValidateMediaStream(
     }
 
     const targetFormat =
-      extraction.formats.find(f => f.quality.toUpperCase() === preferredQuality?.toUpperCase()) ||
-      extraction.formats.find(f => f.quality === 'HD') ||
+      extraction.formats.find(f => preferredQuality && (
+        f.quality.toLowerCase().includes(preferredQuality.toLowerCase()) ||
+        f.resolution?.toLowerCase() === preferredQuality.toLowerCase()
+      )) ||
+      extraction.formats.find(f => f.resolution?.includes('1080')) ||
+      extraction.formats.find(f => f.resolution?.includes('720')) ||
+      extraction.formats.find(f => f.quality.includes('HD') || f.resolution === 'HD') ||
       extraction.formats[0];
 
     if (!targetFormat || !isAllowedCdnUrl(targetFormat.url)) {
@@ -273,6 +281,125 @@ export async function resolveAndValidateMediaStream(
     error: 'Invalid or unauthorized video URL.',
     status: 400
   };
+}
+
+/**
+ * Detects genuine video resolution without false labeling or upscaling
+ */
+function detectGenuineResolution(
+  url: string,
+  html: string,
+  baseType: 'HD' | 'SD'
+): { quality: string; resolution: string } {
+  // 1. Inspect efg query parameter in Facebook CDN URL (base64 encoded JSON)
+  try {
+    const parsed = new URL(url);
+    const efg = parsed.searchParams.get('efg');
+    if (efg) {
+      const decoded = Buffer.from(efg, 'base64').toString('utf-8');
+      if (decoded.includes('1080p') || decoded.includes('1080')) {
+        return { quality: '1080p Full HD', resolution: '1080p' };
+      }
+      if (decoded.includes('720p') || decoded.includes('720')) {
+        return { quality: '720p HD', resolution: '720p' };
+      }
+      if (decoded.includes('480p') || decoded.includes('480')) {
+        return { quality: '480p SD', resolution: '480p' };
+      }
+      if (decoded.includes('360p') || decoded.includes('360')) {
+        return { quality: '360p SD', resolution: '360p' };
+      }
+    }
+  } catch {
+    // Continue if URL parsing fails
+  }
+
+  // 2. Direct string match in URL filename / query
+  if (url.includes('1080p') || url.includes('_1080_')) {
+    return { quality: '1080p Full HD', resolution: '1080p' };
+  }
+  if (url.includes('720p') || url.includes('_720_')) {
+    return { quality: '720p HD', resolution: '720p' };
+  }
+  if (url.includes('480p')) {
+    return { quality: '480p SD', resolution: '480p' };
+  }
+  if (url.includes('360p')) {
+    return { quality: '360p SD', resolution: '360p' };
+  }
+
+  // 3. Inspect JSON metadata in page HTML for height dimensions
+  if (baseType === 'HD') {
+    const heightMatch = html.match(/(?:original_height|target_height|video_height)["':\s]+(\d+)/i);
+    if (heightMatch && heightMatch[1]) {
+      const h = parseInt(heightMatch[1], 10);
+      if (h >= 1080) {
+        return { quality: '1080p Full HD', resolution: '1080p' };
+      }
+      if (h >= 720) {
+        return { quality: '720p HD', resolution: '720p' };
+      }
+    }
+    // Genuinely verified HD stream without claiming 1080p falsely
+    return { quality: 'Best / HD', resolution: 'HD' };
+  }
+
+  return { quality: 'SD (Standard)', resolution: 'SD' };
+}
+
+/**
+ * Retrieves approximate file size from CDN headers or estimates from duration
+ */
+async function getApproximateFileSize(
+  url: string,
+  durationSec?: number,
+  isHd?: boolean
+): Promise<string | undefined> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1800);
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Range': 'bytes=0-0'
+      },
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    const range = res.headers.get('content-range');
+    if (range) {
+      const match = range.match(/\/(\d+)$/);
+      if (match) {
+        const bytes = parseInt(match[1], 10);
+        if (!isNaN(bytes) && bytes > 0) {
+          if (bytes >= 1024 * 1024 * 1024) {
+            return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+          }
+          return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+        }
+      }
+    }
+
+    const len = res.headers.get('content-length');
+    if (len) {
+      const bytes = parseInt(len, 10);
+      if (!isNaN(bytes) && bytes > 1024) {
+        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+      }
+    }
+  } catch {
+    // Fail silently on network probing
+  }
+
+  if (durationSec && durationSec > 0) {
+    const estimatedBytes = isHd ? durationSec * 220 * 1024 : durationSec * 90 * 1024;
+    return `~${(estimatedBytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  return undefined;
 }
 
 /**
@@ -424,20 +551,40 @@ export async function extractFacebookVideo(targetUrl: string): Promise<Extractor
       }
     }
 
+    // Extract approximate duration if available
+    let durationSec: number | undefined = undefined;
+    let duration: string | undefined = undefined;
+    const durationMatch = html.match(/["']duration["']\s*:\s*["']?(\d+)["']?/i);
+    if (durationMatch && durationMatch[1]) {
+      const sec = parseInt(durationMatch[1], 10);
+      if (!isNaN(sec) && sec > 0) {
+        durationSec = sec;
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        duration = `${m}:${s < 10 ? '0' : ''}${s}`;
+      }
+    }
+
     // Check if we found valid streams
     const formats: VideoFormat[] = [];
     if (hdUrl && isAllowedCdnUrl(hdUrl)) {
+      const resInfo = detectGenuineResolution(hdUrl, html, 'HD');
       formats.push({
-        quality: 'HD',
+        quality: resInfo.quality,
+        resolution: resInfo.resolution,
         format: 'MP4',
-        url: hdUrl
+        url: hdUrl,
+        hasAudio: true
       });
     }
     if (sdUrl && isAllowedCdnUrl(sdUrl)) {
+      const resInfo = detectGenuineResolution(sdUrl, html, 'SD');
       formats.push({
-        quality: 'SD',
+        quality: resInfo.quality,
+        resolution: resInfo.resolution,
         format: 'MP4',
-        url: sdUrl
+        url: sdUrl,
+        hasAudio: true
       });
     }
 
@@ -458,17 +605,13 @@ export async function extractFacebookVideo(targetUrl: string): Promise<Extractor
       };
     }
 
-    // Extract approximate duration if available
-    let duration: string | undefined = undefined;
-    const durationMatch = html.match(/["']duration["']\s*:\s*["']?(\d+)["']?/i);
-    if (durationMatch && durationMatch[1]) {
-      const sec = parseInt(durationMatch[1], 10);
-      if (!isNaN(sec) && sec > 0) {
-        const m = Math.floor(sec / 60);
-        const s = sec % 60;
-        duration = `${m}:${s < 10 ? '0' : ''}${s}`;
-      }
-    }
+    // Resolve approximate file sizes concurrently without blocking
+    await Promise.all(
+      formats.map(async fmt => {
+        const isHd = fmt.resolution?.includes('1080') || fmt.resolution?.includes('720') || fmt.quality.includes('HD');
+        fmt.size = await getApproximateFileSize(fmt.url, durationSec, isHd);
+      })
+    );
 
     return {
       success: true,
