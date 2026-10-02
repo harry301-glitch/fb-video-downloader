@@ -99,7 +99,12 @@ async function handleVideoDownload(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  let safeFilename = rawFilename
+  let chosenFilename = rawFilename;
+  if (!chosenFilename || chosenFilename === 'facebook-video.mp4') {
+    chosenFilename = quality ? `facebook-video-${quality}.mp4` : 'facebook-video.mp4';
+  }
+
+  let safeFilename = chosenFilename
     .replace(/[^a-zA-Z0-9._-]/g, '_')
     .replace(/_{2,}/g, '_')
     .trim();

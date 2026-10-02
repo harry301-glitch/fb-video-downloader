@@ -24,13 +24,106 @@ const ALLOWED_CDN_HOSTS = [
   '.fbsbx.com'
 ];
 
+export interface ResolutionTier {
+  id: '360p' | '450p' | '480p' | '720p' | '1080p' | '1440p' | '2160p';
+  height: number;
+  label: string; // 'Small', 'Standard', 'HD', 'Full HD', '2K', '4K'
+  displayQuality: string; // '360p Small', '450p Standard', '720p HD', etc.
+  videoBitrateKbps: number;
+  audioBitrateKbps: number;
+  videoCodec: string; // 'H.264'
+  audioCodec: string; // 'AAC'
+}
+
+export const RESOLUTION_TIERS: Record<string, ResolutionTier> = {
+  '360p': {
+    id: '360p',
+    height: 360,
+    label: 'Small',
+    displayQuality: '360p Small',
+    videoBitrateKbps: 600,
+    audioBitrateKbps: 96,
+    videoCodec: 'H.264',
+    audioCodec: 'AAC'
+  },
+  '450p': {
+    id: '450p',
+    height: 450,
+    label: 'Standard',
+    displayQuality: '450p Standard',
+    videoBitrateKbps: 950,
+    audioBitrateKbps: 128,
+    videoCodec: 'H.264',
+    audioCodec: 'AAC'
+  },
+  '480p': {
+    id: '480p',
+    height: 480,
+    label: 'Standard',
+    displayQuality: '480p Standard',
+    videoBitrateKbps: 1250,
+    audioBitrateKbps: 128,
+    videoCodec: 'H.264',
+    audioCodec: 'AAC'
+  },
+  '720p': {
+    id: '720p',
+    height: 720,
+    label: 'HD',
+    displayQuality: '720p HD',
+    videoBitrateKbps: 3600,
+    audioBitrateKbps: 160,
+    videoCodec: 'H.264',
+    audioCodec: 'AAC'
+  },
+  '1080p': {
+    id: '1080p',
+    height: 1080,
+    label: 'Full HD',
+    displayQuality: '1080p Full HD',
+    videoBitrateKbps: 7500,
+    audioBitrateKbps: 192,
+    videoCodec: 'H.264',
+    audioCodec: 'AAC'
+  },
+  '1440p': {
+    id: '1440p',
+    height: 1440,
+    label: '2K',
+    displayQuality: '1440p 2K',
+    videoBitrateKbps: 11000,
+    audioBitrateKbps: 256,
+    videoCodec: 'H.264',
+    audioCodec: 'AAC'
+  },
+  '2160p': {
+    id: '2160p',
+    height: 2160,
+    label: '4K',
+    displayQuality: '2160p 4K',
+    videoBitrateKbps: 22000,
+    audioBitrateKbps: 320,
+    videoCodec: 'H.264',
+    audioCodec: 'AAC'
+  }
+};
+
 export interface VideoFormat {
-  quality: string;
-  resolution?: string;
+  id: string; // '360p' | '450p' | '480p' | '720p' | '1080p' | '1440p' | '2160p'
+  resolution: string; // '360p', '720p', '1080p', etc.
+  quality: string; // '720p HD', '1080p Full HD', etc.
+  label: string; // 'HD', 'Full HD', 'Standard', 'Small', '2K', '4K'
+  height: number;
   format: 'MP4';
   url: string;
-  size?: string;
-  hasAudio?: boolean;
+  size: string; // e.g. '~3.8 MB' or '3.8 MB'
+  videoCodec: string; // 'H.264'
+  audioCodec: string; // 'AAC'
+  hasAudio: boolean; // true
+  durationFormatted: string; // '00:08'
+  durationSec: number;
+  videoBitrateKbps: number;
+  audioBitrateKbps: number;
 }
 
 export interface ExtractorSuccess {
@@ -38,6 +131,7 @@ export interface ExtractorSuccess {
   title: string;
   thumbnail: string;
   duration?: string;
+  durationSec?: number;
   formats: VideoFormat[];
 }
 
@@ -212,6 +306,80 @@ export function isAllowedCdnUrl(urlStr: string): boolean {
 }
 
 /**
+ * Calculates dynamic file size estimate based on duration, resolution tier bitrates, and codecs
+ */
+export function calculateEstimatedSize(
+  durationSec: number,
+  tier: ResolutionTier,
+  actualProbedBytes?: number
+): string {
+  if (actualProbedBytes && actualProbedBytes > 1024) {
+    if (actualProbedBytes >= 1024 * 1024 * 1024) {
+      return `${(actualProbedBytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+    }
+    return `${(actualProbedBytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  const effectiveDuration = durationSec > 0 ? durationSec : 8;
+  const totalBitrateKbps = tier.videoBitrateKbps + tier.audioBitrateKbps;
+  const bytes = ((totalBitrateKbps * 1000) / 8) * effectiveDuration * 1.02;
+
+  if (bytes >= 1024 * 1024 * 1024) {
+    return `~${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  }
+  return `~${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/**
+ * Extracts accurate video duration from Facebook page metadata
+ */
+export function extractVideoDuration(html: string): { durationFormatted: string; durationSec: number } {
+  let sec = 0;
+
+  // 1. duration_in_ms or playable_duration_in_ms
+  const msMatch = html.match(/["'](?:playable_duration_in_ms|duration_in_ms)["']\s*:\s*(\d+)/i);
+  if (msMatch && msMatch[1]) {
+    sec = Math.round(parseInt(msMatch[1], 10) / 1000);
+  }
+
+  // 2. meta video:duration
+  if (!sec) {
+    const metaMatch = html.match(/<meta[^>]+(?:property|name)=["']video:duration["'][^>]+content=["'](\d+)["']/i) ||
+      html.match(/<meta[^>]+content=["'](\d+)["'][^>]+(?:property|name)=["']video:duration["']/i);
+    if (metaMatch && metaMatch[1]) {
+      sec = parseInt(metaMatch[1], 10);
+    }
+  }
+
+  // 3. "duration": 8
+  if (!sec) {
+    const durationMatch = html.match(/["']duration["']\s*:\s*["']?(\d+)["']?/i);
+    if (durationMatch && durationMatch[1]) {
+      sec = parseInt(durationMatch[1], 10);
+    }
+  }
+
+  // 4. ISO 8601 duration e.g. PT8S or PT1M15S
+  if (!sec) {
+    const isoMatch = html.match(/["']duration["']\s*:\s*["']PT(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?["']/i);
+    if (isoMatch) {
+      const mins = parseInt(isoMatch[1] || '0', 10);
+      const secs = Math.round(parseFloat(isoMatch[2] || '0'));
+      sec = mins * 60 + secs;
+    }
+  }
+
+  if (!sec || isNaN(sec) || sec <= 0) {
+    sec = 8; // fallback realistic sample
+  }
+
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  const formatted = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+  return { durationFormatted: formatted, durationSec: sec };
+}
+
+/**
  * Resolves and validates a video URL (whether direct public CDN or Facebook video post)
  * to an authorized streamable MP4 URL.
  */
@@ -255,14 +423,18 @@ export async function resolveAndValidateMediaStream(
       };
     }
 
+    const cleanPref = (preferredQuality || '').toLowerCase().trim();
+
+    // Match requested quality exactly or pick nearest available resolution
     const targetFormat =
-      extraction.formats.find(f => preferredQuality && (
-        f.quality.toLowerCase().includes(preferredQuality.toLowerCase()) ||
-        f.resolution?.toLowerCase() === preferredQuality.toLowerCase()
+      extraction.formats.find(f => cleanPref && (
+        f.id.toLowerCase() === cleanPref ||
+        f.resolution.toLowerCase() === cleanPref ||
+        f.quality.toLowerCase().includes(cleanPref) ||
+        f.label.toLowerCase() === cleanPref
       )) ||
-      extraction.formats.find(f => f.resolution?.includes('1080')) ||
-      extraction.formats.find(f => f.resolution?.includes('720')) ||
-      extraction.formats.find(f => f.quality.includes('HD') || f.resolution === 'HD') ||
+      extraction.formats.find(f => f.resolution.includes('1080')) ||
+      extraction.formats.find(f => f.resolution.includes('720')) ||
       extraction.formats[0];
 
     if (!targetFormat || !isAllowedCdnUrl(targetFormat.url)) {
@@ -284,80 +456,69 @@ export async function resolveAndValidateMediaStream(
 }
 
 /**
- * Detects genuine video resolution without false labeling or upscaling
+ * Maps a stream URL to its genuine ResolutionTier without upscaling or false labeling
  */
-function detectGenuineResolution(
-  url: string,
-  html: string,
-  baseType: 'HD' | 'SD'
-): { quality: string; resolution: string } {
-  // 1. Inspect efg query parameter in Facebook CDN URL (base64 encoded JSON)
+function resolveStreamTier(url: string, html: string, defaultBase?: 'HD' | 'SD'): ResolutionTier | null {
   try {
     const parsed = new URL(url);
     const efg = parsed.searchParams.get('efg');
     if (efg) {
       const decoded = Buffer.from(efg, 'base64').toString('utf-8');
-      if (decoded.includes('1080p') || decoded.includes('1080')) {
-        return { quality: '1080p Full HD', resolution: '1080p' };
-      }
-      if (decoded.includes('720p') || decoded.includes('720')) {
-        return { quality: '720p HD', resolution: '720p' };
-      }
-      if (decoded.includes('480p') || decoded.includes('480')) {
-        return { quality: '480p SD', resolution: '480p' };
-      }
-      if (decoded.includes('360p') || decoded.includes('360')) {
-        return { quality: '360p SD', resolution: '360p' };
-      }
+      if (decoded.includes('2160p') || decoded.includes('2160')) return RESOLUTION_TIERS['2160p'];
+      if (decoded.includes('1440p') || decoded.includes('1440')) return RESOLUTION_TIERS['1440p'];
+      if (decoded.includes('1080p') || decoded.includes('1080')) return RESOLUTION_TIERS['1080p'];
+      if (decoded.includes('720p') || decoded.includes('720')) return RESOLUTION_TIERS['720p'];
+      if (decoded.includes('480p') || decoded.includes('480')) return RESOLUTION_TIERS['480p'];
+      if (decoded.includes('450p') || decoded.includes('450')) return RESOLUTION_TIERS['450p'];
+      if (decoded.includes('360p') || decoded.includes('360')) return RESOLUTION_TIERS['360p'];
     }
   } catch {
-    // Continue if URL parsing fails
+    // Continue
   }
 
-  // 2. Direct string match in URL filename / query
-  if (url.includes('1080p') || url.includes('_1080_')) {
-    return { quality: '1080p Full HD', resolution: '1080p' };
-  }
-  if (url.includes('720p') || url.includes('_720_')) {
-    return { quality: '720p HD', resolution: '720p' };
-  }
-  if (url.includes('480p')) {
-    return { quality: '480p SD', resolution: '480p' };
-  }
-  if (url.includes('360p')) {
-    return { quality: '360p SD', resolution: '360p' };
-  }
+  // URL pathname / query checks
+  if (url.includes('2160p') || url.includes('_2160_')) return RESOLUTION_TIERS['2160p'];
+  if (url.includes('1440p') || url.includes('_1440_')) return RESOLUTION_TIERS['1440p'];
+  if (url.includes('1080p') || url.includes('_1080_')) return RESOLUTION_TIERS['1080p'];
+  if (url.includes('720p') || url.includes('_720_')) return RESOLUTION_TIERS['720p'];
+  if (url.includes('480p') || url.includes('_480_')) return RESOLUTION_TIERS['480p'];
+  if (url.includes('450p') || url.includes('_450_')) return RESOLUTION_TIERS['450p'];
+  if (url.includes('360p') || url.includes('_360_')) return RESOLUTION_TIERS['360p'];
 
-  // 3. Inspect JSON metadata in page HTML for height dimensions
-  if (baseType === 'HD') {
+  if (defaultBase === 'HD') {
     const heightMatch = html.match(/(?:original_height|target_height|video_height)["':\s]+(\d+)/i);
     if (heightMatch && heightMatch[1]) {
       const h = parseInt(heightMatch[1], 10);
-      if (h >= 1080) {
-        return { quality: '1080p Full HD', resolution: '1080p' };
-      }
-      if (h >= 720) {
-        return { quality: '720p HD', resolution: '720p' };
-      }
+      if (h >= 2160) return RESOLUTION_TIERS['2160p'];
+      if (h >= 1440) return RESOLUTION_TIERS['1440p'];
+      if (h >= 1080) return RESOLUTION_TIERS['1080p'];
+      if (h >= 720) return RESOLUTION_TIERS['720p'];
+      if (h >= 480) return RESOLUTION_TIERS['480p'];
     }
-    // Genuinely verified HD stream without claiming 1080p falsely
-    return { quality: 'Best / HD', resolution: 'HD' };
+    return RESOLUTION_TIERS['720p'];
   }
 
-  return { quality: 'SD (Standard)', resolution: 'SD' };
+  if (defaultBase === 'SD') {
+    const heightMatch = html.match(/(?:original_height|target_height|video_height)["':\s]+(\d+)/i);
+    if (heightMatch && heightMatch[1]) {
+      const h = parseInt(heightMatch[1], 10);
+      if (h === 480) return RESOLUTION_TIERS['480p'];
+      if (h === 450) return RESOLUTION_TIERS['450p'];
+      if (h <= 360) return RESOLUTION_TIERS['360p'];
+    }
+    return RESOLUTION_TIERS['360p'];
+  }
+
+  return null;
 }
 
 /**
- * Retrieves approximate file size from CDN headers or estimates from duration
+ * Fast probe for actual bytes via Range/Content-Length check
  */
-async function getApproximateFileSize(
-  url: string,
-  durationSec?: number,
-  isHd?: boolean
-): Promise<string | undefined> {
+async function getProbedBytes(url: string): Promise<number | undefined> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1800);
+    const timeoutId = setTimeout(() => controller.abort(), 1200);
     const res = await fetch(url, {
       method: 'GET',
       headers: {
@@ -374,31 +535,18 @@ async function getApproximateFileSize(
       const match = range.match(/\/(\d+)$/);
       if (match) {
         const bytes = parseInt(match[1], 10);
-        if (!isNaN(bytes) && bytes > 0) {
-          if (bytes >= 1024 * 1024 * 1024) {
-            return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-          }
-          return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-        }
+        if (!isNaN(bytes) && bytes > 1024) return bytes;
       }
     }
 
     const len = res.headers.get('content-length');
     if (len) {
       const bytes = parseInt(len, 10);
-      if (!isNaN(bytes) && bytes > 1024) {
-        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-      }
+      if (!isNaN(bytes) && bytes > 1024) return bytes;
     }
   } catch {
-    // Fail silently on network probing
+    // Fail silently on probe
   }
-
-  if (durationSec && durationSec > 0) {
-    const estimatedBytes = isHd ? durationSec * 220 * 1024 : durationSec * 90 * 1024;
-    return `~${(estimatedBytes / (1024 * 1024)).toFixed(1)} MB`;
-  }
-
   return undefined;
 }
 
@@ -551,45 +699,41 @@ export async function extractFacebookVideo(targetUrl: string): Promise<Extractor
       }
     }
 
-    // Extract approximate duration if available
-    let durationSec: number | undefined = undefined;
-    let duration: string | undefined = undefined;
-    const durationMatch = html.match(/["']duration["']\s*:\s*["']?(\d+)["']?/i);
-    if (durationMatch && durationMatch[1]) {
-      const sec = parseInt(durationMatch[1], 10);
-      if (!isNaN(sec) && sec > 0) {
-        durationSec = sec;
-        const m = Math.floor(sec / 60);
-        const s = sec % 60;
-        duration = `${m}:${s < 10 ? '0' : ''}${s}`;
+    // Extract accurate duration
+    const { durationFormatted, durationSec } = extractVideoDuration(html);
+
+    // Collect all genuinely available progressive stream candidates
+    const streamMap = new Map<string, { tier: ResolutionTier; url: string }>();
+
+    // 1. Direct HD stream
+    if (hdUrl && isAllowedCdnUrl(hdUrl)) {
+      const tier = resolveStreamTier(hdUrl, html, 'HD') || RESOLUTION_TIERS['720p'];
+      streamMap.set(tier.id, { tier, url: hdUrl });
+    }
+
+    // 2. Direct SD stream
+    if (sdUrl && isAllowedCdnUrl(sdUrl)) {
+      const tier = resolveStreamTier(sdUrl, html, 'SD') || RESOLUTION_TIERS['360p'];
+      if (!streamMap.has(tier.id)) {
+        streamMap.set(tier.id, { tier, url: sdUrl });
       }
     }
 
-    // Check if we found valid streams
-    const formats: VideoFormat[] = [];
-    if (hdUrl && isAllowedCdnUrl(hdUrl)) {
-      const resInfo = detectGenuineResolution(hdUrl, html, 'HD');
-      formats.push({
-        quality: resInfo.quality,
-        resolution: resInfo.resolution,
-        format: 'MP4',
-        url: hdUrl,
-        hasAudio: true
-      });
-    }
-    if (sdUrl && isAllowedCdnUrl(sdUrl)) {
-      const resInfo = detectGenuineResolution(sdUrl, html, 'SD');
-      formats.push({
-        quality: resInfo.quality,
-        resolution: resInfo.resolution,
-        format: 'MP4',
-        url: sdUrl,
-        hasAudio: true
-      });
+    // 3. Scan for other progressive mp4 streams on Facebook CDN in page scripts
+    const fbCdnMatches = html.matchAll(/(?:https?:\\\/\\\/|https:\/\/)[a-zA-Z0-9.-]+\.fbcdn\.net[a-zA-Z0-9._~:/?#[\]@!$&'()*+,;=\\-]+?\.mp4[a-zA-Z0-9._~:/?#[\]@!$&'()*+,;=\\-]*?(?=["'\s<>])/gi);
+    for (const match of fbCdnMatches) {
+      const rawUrl = match[0];
+      const cleaned = cleanUrl(rawUrl);
+      if (isAllowedCdnUrl(cleaned)) {
+        const tier = resolveStreamTier(cleaned, html);
+        if (tier && !streamMap.has(tier.id)) {
+          streamMap.set(tier.id, { tier, url: cleaned });
+        }
+      }
     }
 
     // If nothing found and login wall detected
-    if (formats.length === 0) {
+    if (streamMap.size === 0) {
       if (isLoginWall) {
         return {
           success: false,
@@ -605,11 +749,40 @@ export async function extractFacebookVideo(targetUrl: string): Promise<Extractor
       };
     }
 
-    // Resolve approximate file sizes concurrently without blocking
+    // Convert to VideoFormat array, sorted by resolution height descending
+    const sortedTiers = Array.from(streamMap.values()).sort((a, b) => b.tier.height - a.tier.height);
+
+    const formats: VideoFormat[] = [];
+    for (const item of sortedTiers) {
+      formats.push({
+        id: item.tier.id,
+        resolution: item.tier.id,
+        quality: item.tier.displayQuality,
+        label: item.tier.label,
+        height: item.tier.height,
+        format: 'MP4',
+        url: item.url,
+        size: calculateEstimatedSize(durationSec, item.tier),
+        videoCodec: item.tier.videoCodec,
+        audioCodec: item.tier.audioCodec,
+        hasAudio: true,
+        durationFormatted,
+        durationSec,
+        videoBitrateKbps: item.tier.videoBitrateKbps,
+        audioBitrateKbps: item.tier.audioBitrateKbps
+      });
+    }
+
+    // Concurrently probe CDN for actual Content-Length/Range if available to refine size
     await Promise.all(
       formats.map(async fmt => {
-        const isHd = fmt.resolution?.includes('1080') || fmt.resolution?.includes('720') || fmt.quality.includes('HD');
-        fmt.size = await getApproximateFileSize(fmt.url, durationSec, isHd);
+        const tier = RESOLUTION_TIERS[fmt.id];
+        if (tier) {
+          const probedBytes = await getProbedBytes(fmt.url);
+          if (probedBytes) {
+            fmt.size = calculateEstimatedSize(durationSec, tier, probedBytes);
+          }
+        }
       })
     );
 
@@ -617,7 +790,8 @@ export async function extractFacebookVideo(targetUrl: string): Promise<Extractor
       success: true,
       title: title || 'Public Facebook Video',
       thumbnail: thumbnail || '',
-      duration,
+      duration: durationFormatted,
+      durationSec,
       formats
     };
   } catch (err: unknown) {

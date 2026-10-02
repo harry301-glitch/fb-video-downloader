@@ -60,6 +60,11 @@ export default async (req: Request): Promise<Response> => {
     );
   }
 
+  // Format filename cleanly to include quality tag (e.g. facebook-video-720p.mp4)
+  if (!requestedFilename || requestedFilename === 'facebook-video.mp4') {
+    requestedFilename = requestedQuality ? `facebook-video-${requestedQuality}.mp4` : 'facebook-video.mp4';
+  }
+
   // Sanitize filename to prevent header injection
   let safeFilename = requestedFilename
     .replace(/[^a-zA-Z0-9._-]/g, '_')

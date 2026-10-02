@@ -3,12 +3,21 @@
  */
 
 export interface VideoFormat {
-  quality: string;
-  resolution?: string;
+  id: string; // '360p' | '450p' | '480p' | '720p' | '1080p' | '1440p' | '2160p'
+  resolution: string; // '360p', '720p', '1080p', etc.
+  quality: string; // '720p HD', '1080p Full HD', etc.
+  label: string; // 'HD', 'Full HD', 'Standard', 'Small', '2K', '4K'
+  height: number;
   format: 'MP4';
   url: string;
-  size?: string;
-  hasAudio?: boolean;
+  size: string; // e.g. '~3.8 MB' or '3.8 MB'
+  videoCodec: string; // 'H.264'
+  audioCodec: string; // 'AAC'
+  hasAudio: boolean; // true
+  durationFormatted: string; // '00:08'
+  durationSec: number;
+  videoBitrateKbps: number;
+  audioBitrateKbps: number;
 }
 
 export interface VideoExtractionResponse {
@@ -16,6 +25,7 @@ export interface VideoExtractionResponse {
   title?: string;
   thumbnail?: string;
   duration?: string;
+  durationSec?: number;
   formats?: VideoFormat[];
   error?: string;
 }
