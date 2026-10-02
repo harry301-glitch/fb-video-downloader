@@ -44,11 +44,6 @@ export function HomePage() {
         schema={getFaqSchema(FAQ_DATA)}
       />
 
-      {/* Top Banner Advertisement Slot */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-4">
-        <AdContainer slot="TOP" />
-      </div>
-
       {/* Hero Section */}
       <section className="pt-6 pb-12 sm:pt-10 sm:pb-16 bg-gradient-to-b from-blue-50/50 via-slate-50 to-white border-b border-slate-200/60">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -76,18 +71,25 @@ export function HomePage() {
 
           {/* Download Results Card */}
           {downloadResult && (
-            <ResultCard
-              data={downloadResult}
-              originalUrl={currentUrl}
-              onReset={handleReset}
-            />
+            <div className="space-y-4">
+              <ResultCard
+                data={downloadResult}
+                originalUrl={currentUrl}
+                onReset={handleReset}
+              />
+
+              {/* 3. One ad below the video result/download area */}
+              <div className="max-w-md mx-auto w-full pt-1">
+                <AdContainer slot="BELOW_RESULT" format="rectangle" />
+              </div>
+            </div>
           )}
         </div>
       </section>
 
-      {/* Content Banner Advertisement Slot */}
+      {/* 1. One banner below the hero section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <AdContainer slot="CONTENT" />
+        <AdContainer slot="BELOW_HERO" format="leaderboard" />
       </div>
 
       {/* How It Works (3 Steps) */}
@@ -138,7 +140,7 @@ export function HomePage() {
                 Download MP4
               </h3>
               <p className="text-sm text-slate-600 leading-relaxed">
-                Choose the available quality (HD 1080p or SD) and download the MP4 file directly to your smartphone, tablet, or desktop.
+                Choose the available quality (HD 1080p, 720p, or SD) and download the MP4 file directly to your smartphone, tablet, or desktop.
               </p>
             </div>
           </div>
@@ -155,174 +157,188 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* SEO Content Section 1: How to Download a Facebook Video */}
-      <section className="py-14 sm:py-20 bg-slate-50 border-b border-slate-200/80">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="space-y-6">
-            <div className="border-b border-slate-200 pb-4">
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-                How to Download a Facebook Video
-              </h2>
-              <p className="mt-2 text-slate-600 text-sm sm:text-base">
-                A simple, reliable method to save public video content for authorized offline use.
-              </p>
-            </div>
-
-            <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed space-y-4 text-sm sm:text-base">
-              <p>
-                Facebook is home to millions of educational clips, news segments, tutorials, and creative reels shared every day. When content creators, digital archivists, or authorized viewers need to keep a backup copy of a public clip for offline viewing or educational research, finding a clean and secure method is essential.
-              </p>
-              <p>
-                Our <strong>Facebook Video Downloader</strong> provides a streamlined web utility designed to fetch and format video streams that have been published with unrestricted public access. You do not need to install browser plugins or run standalone executables on your system.
-              </p>
-              <p>
-                To get started, simply locate the video on Facebook. On a desktop browser, copy the full URL from your address bar (for example: <code className="text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded font-mono text-xs">https://www.facebook.com/watch/?v=123456789</code>). On the Facebook mobile application for iOS or Android, tap the <strong>Share</strong> button located beneath the post and select <strong>Copy Link</strong>.
-              </p>
-              <p>
-                Once copied, navigate to our website, paste the link into the designated field, and click <strong>Download</strong>. Our system will analyze the URL, check for public stream availability, and provide clean direct download links for the highest available resolution.
-              </p>
-            </div>
-
-            <div className="pt-6 border-t border-slate-200">
-              <h3 className="text-xl font-bold text-slate-900 mb-2">
-                Facebook Video Downloader HD: Genuine Quality Without Recompression
-              </h3>
-              <p className="text-slate-700 leading-relaxed text-sm sm:text-base">
-                When you <strong>download Facebook videos online</strong>, preserving visual clarity and crisp audio is essential. Our engine detects genuine source resolutions, providing <strong>1080p Full HD</strong> or <strong>720p HD</strong> whenever published by the creator, with seamless <strong>SD fallback</strong> when higher resolutions are not available. We never artificially upscale low-quality streams or recompress files, ensuring you download the original source video with full audio fidelity.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* In-Article Advertisement Slot */}
+      {/* 2. One ad between the downloader section and informational content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <AdContainer slot="IN_ARTICLE" />
+        <AdContainer slot="BETWEEN_DOWNLOADER_CONTENT" format="leaderboard" />
       </div>
 
-      {/* SEO Content Section 2: Why Use Our Facebook Video Downloader */}
-      <section className="py-14 sm:py-20 bg-white border-b border-slate-200/80">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-14">
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-              Why Use Our Facebook Video Downloader?
-            </h2>
-            <p className="mt-3 text-slate-600 text-sm sm:text-base">
-              Engineered with focus on speed, privacy, mobile responsiveness, and legal transparency.
-            </p>
+      {/* Main Content Layout with 7. Desktop Sidebar Advertisement */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full xl:flex xl:items-start xl:gap-8">
+        <div className="flex-1 min-w-0">
+          {/* SEO Content Section 1: How to Download a Facebook Video */}
+          <section className="py-12 sm:py-16 bg-slate-50 rounded-2xl border border-slate-200/80 my-6 px-6 sm:px-10">
+            <div className="space-y-6">
+              <div className="border-b border-slate-200 pb-4">
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                  How to Download a Facebook Video
+                </h2>
+                <p className="mt-2 text-slate-600 text-sm sm:text-base">
+                  A simple, reliable method to save public video content for authorized offline use.
+                </p>
+              </div>
+
+              <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed space-y-4 text-sm sm:text-base">
+                <p>
+                  Facebook is home to millions of educational clips, news segments, tutorials, and creative reels shared every day. When content creators, digital archivists, or authorized viewers need to keep a backup copy of a public clip for offline viewing or educational research, finding a clean and secure method is essential.
+                </p>
+                <p>
+                  Our <strong>Facebook Video Downloader</strong> provides a streamlined web utility designed to fetch and format video streams that have been published with unrestricted public access. You do not need to install browser plugins or run standalone executables on your system.
+                </p>
+                <p>
+                  To get started, simply locate the video on Facebook. On a desktop browser, copy the full URL from your address bar (for example: <code className="text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded font-mono text-xs">https://www.facebook.com/watch/?v=123456789</code>). On the Facebook mobile application for iOS or Android, tap the <strong>Share</strong> button located beneath the post and select <strong>Copy Link</strong>.
+                </p>
+                <p>
+                  Once copied, navigate to our website, paste the link into the designated field, and click <strong>Download</strong>. Our system will analyze the URL, check for public stream availability, and provide clean direct download links for the highest available resolution.
+                </p>
+              </div>
+
+              <div className="pt-6 border-t border-slate-200">
+                <h3 className="text-xl font-bold text-slate-900 mb-2">
+                  Facebook Video Downloader HD: Genuine Quality Without Recompression
+                </h3>
+                <p className="text-slate-700 leading-relaxed text-sm sm:text-base">
+                  When you <strong>download Facebook videos online</strong>, preserving visual clarity and crisp audio is essential. Our engine detects genuine source resolutions, providing <strong>1080p Full HD</strong> or <strong>720p HD</strong> whenever published by the creator, with seamless <strong>SD fallback</strong> when higher resolutions are not available. We never artificially upscale low-quality streams or recompress files, ensuring you download the original source video with full audio fidelity.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* 4. One native advertisement in the middle of the informational content */}
+          <div className="my-6">
+            <AdContainer slot="NATIVE_ARTICLE" format="native" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Feature 1 */}
-            <div className="p-6 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm transition-all">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-4">
-                <SlidersHorizontal className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-slate-900 text-base mb-2">
-                Simple & Intuitive Interface
-              </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                No complex configurations, misleading download buttons, or confusing prompts. One clean input box delivers your video format options instantly.
+          {/* SEO Content Section 2: Why Use Our Facebook Video Downloader */}
+          <section className="py-12 sm:py-16 bg-white rounded-2xl border border-slate-200/80 my-6 px-6 sm:px-10">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                Why Use Our Facebook Video Downloader?
+              </h2>
+              <p className="mt-3 text-slate-600 text-sm sm:text-base">
+                Engineered with focus on speed, privacy, mobile responsiveness, and legal transparency.
               </p>
             </div>
 
-            {/* Feature 2 */}
-            <div className="p-6 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm transition-all">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-4">
-                <Smartphone className="w-5 h-5" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Feature 1 */}
+              <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/50 hover:border-slate-300 hover:shadow-sm transition-all">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-4">
+                  <SlidersHorizontal className="w-5 h-5" />
+                </div>
+                <h3 className="font-bold text-slate-900 text-base mb-2">
+                  Simple & Intuitive Interface
+                </h3>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  No complex configurations, misleading download buttons, or confusing prompts. One clean input box delivers your video format options instantly.
+                </p>
               </div>
-              <h3 className="font-bold text-slate-900 text-base mb-2">
-                Mobile-First Design
-              </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Carefully optimized for iPhone Safari and Android mobile browsers. Enjoy large tap targets, zero horizontal scrolling, and native file saving.
+
+              {/* Feature 2 */}
+              <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/50 hover:border-slate-300 hover:shadow-sm transition-all">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-4">
+                  <Smartphone className="w-5 h-5" />
+                </div>
+                <h3 className="font-bold text-slate-900 text-base mb-2">
+                  Mobile-First Design
+                </h3>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Carefully optimized for iPhone Safari and Android mobile browsers. Enjoy large tap targets, zero horizontal scrolling, and native file saving.
+                </p>
+              </div>
+
+              {/* Feature 3 */}
+              <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/50 hover:border-slate-300 hover:shadow-sm transition-all">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-4">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <h3 className="font-bold text-slate-900 text-base mb-2">
+                  Fast Server Processing
+                </h3>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Lightweight server-side extraction resolves public media headers in seconds, delivering high-speed responses without bloated client-side code.
+                </p>
+              </div>
+
+              {/* Feature 4 */}
+              <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/50 hover:border-slate-300 hover:shadow-sm transition-all">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-4">
+                  <Layers className="w-5 h-5" />
+                </div>
+                <h3 className="font-bold text-slate-900 text-base mb-2">
+                  Multiple Quality Options
+                </h3>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Whenever available on the original post, download High Definition (HD 1080p/720p) or data-saving Standard Definition (SD) in universal MP4.
+                </p>
+              </div>
+
+              {/* Feature 5 */}
+              <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/50 hover:border-slate-300 hover:shadow-sm transition-all">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-4">
+                  <Shield className="w-5 h-5" />
+                </div>
+                <h3 className="font-bold text-slate-900 text-base mb-2">
+                  No Registration Required
+                </h3>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  We never ask for your email address, phone number, Facebook login credentials, or personal information. Your privacy is respected.
+                </p>
+              </div>
+
+              {/* Feature 6 */}
+              <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/50 hover:border-slate-300 hover:shadow-sm transition-all">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-4">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <h3 className="font-bold text-slate-900 text-base mb-2">
+                  Ethical & Safe Standards
+                </h3>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Strict adherence to access control boundaries: we only process public links and never bypass Facebook login walls or private restrictions.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* 5. One advertisement before FAQ */}
+          <div className="my-6">
+            <AdContainer slot="BEFORE_FAQ" format="leaderboard" />
+          </div>
+
+          {/* FAQ Section on Homepage */}
+          <section className="py-12 sm:py-16 bg-slate-50 rounded-2xl border border-slate-200/80 my-6 px-6 sm:px-10">
+            <div className="text-center max-w-2xl mx-auto mb-10">
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                Frequently Asked Questions
+              </h2>
+              <p className="mt-3 text-slate-600 text-sm sm:text-base">
+                Find answers to commonly asked questions about our online Facebook video downloader.
               </p>
             </div>
 
-            {/* Feature 3 */}
-            <div className="p-6 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm transition-all">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-4">
-                <Zap className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-slate-900 text-base mb-2">
-                Fast Server Processing
-              </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Lightweight server-side extraction resolves public media headers in seconds, delivering high-speed responses without bloated client-side code.
-              </p>
-            </div>
+            <FaqAccordion items={FAQ_DATA} />
 
-            {/* Feature 4 */}
-            <div className="p-6 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm transition-all">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-4">
-                <Layers className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-slate-900 text-base mb-2">
-                Multiple Quality Options
-              </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Whenever available on the original post, download High Definition (HD 1080p/720p) or data-saving Standard Definition (SD) in universal MP4.
-              </p>
+            <div className="mt-8 text-center">
+              <Link
+                to="/faq"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+              >
+                <span>Visit our full FAQ page with all questions and search</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
+          </section>
 
-            {/* Feature 5 */}
-            <div className="p-6 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm transition-all">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-4">
-                <Shield className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-slate-900 text-base mb-2">
-                No Registration Required
-              </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                We never ask for your email address, phone number, Facebook login credentials, or personal information. Your privacy is respected.
-              </p>
-            </div>
-
-            {/* Feature 6 */}
-            <div className="p-6 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm transition-all">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-4">
-                <CheckCircle2 className="w-5 h-5" />
-              </div>
-              <h3 className="font-bold text-slate-900 text-base mb-2">
-                Ethical & Safe Standards
-              </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Strict adherence to access control boundaries: we only process public links and never bypass Facebook login walls or private restrictions.
-              </p>
-            </div>
+          {/* 6. One advertisement after FAQ */}
+          <div className="my-6">
+            <AdContainer slot="AFTER_FAQ" format="leaderboard" />
           </div>
         </div>
-      </section>
 
-      {/* FAQ Section on Homepage */}
-      <section className="py-14 sm:py-20 bg-slate-50 border-b border-slate-200/80">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-10">
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-              Frequently Asked Questions
-            </h2>
-            <p className="mt-3 text-slate-600 text-sm sm:text-base">
-              Find answers to commonly asked questions about our online Facebook video downloader.
-            </p>
-          </div>
-
-          <FaqAccordion items={FAQ_DATA} />
-
-          <div className="mt-8 text-center">
-            <Link
-              to="/faq"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline"
-            >
-              <span>Visit our full FAQ page with all questions and search</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer Advertisement Slot */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <AdContainer slot="FOOTER" />
+        {/* 7. Desktop sidebar advertisement where there is enough space */}
+        <aside className="hidden xl:block w-[160px] shrink-0 sticky top-24 self-start pt-6">
+          <AdContainer slot="DESKTOP_SIDEBAR" format="skyscraper" />
+        </aside>
       </div>
     </div>
   );

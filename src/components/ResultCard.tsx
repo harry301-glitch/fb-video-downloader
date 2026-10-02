@@ -221,12 +221,15 @@ export function ResultCard({ data, originalUrl, onReset }: ResultCardProps) {
               </div>
 
               {/* Primary Action Button for Selected Quality */}
-              <div className="pt-1">
+              <div className="pt-1 relative z-10">
                 <button
                   type="button"
-                  onClick={() => handleDownload(selectedFormat)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(selectedFormat);
+                  }}
                   disabled={downloadingQuality !== null}
-                  className="w-full py-3.5 px-5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-400 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-md transition-all text-sm sm:text-base cursor-pointer"
+                  className="w-full py-3.5 px-5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-400 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-md transition-all text-sm sm:text-base cursor-pointer select-none"
                 >
                   {downloadingQuality === selectedFormat.quality ? (
                     <>
@@ -248,7 +251,7 @@ export function ResultCard({ data, originalUrl, onReset }: ResultCardProps) {
               </div>
 
               {/* All Available Quality Rows */}
-              <div className="pt-2">
+              <div className="pt-2 relative z-10">
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-2">
                   All Format Options:
                 </span>
@@ -294,9 +297,12 @@ export function ResultCard({ data, originalUrl, onReset }: ResultCardProps) {
 
                         <button
                           type="button"
-                          onClick={() => handleDownload(fmt)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownload(fmt);
+                          }}
                           disabled={downloadingQuality !== null}
-                          className={`px-3.5 py-2 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all shadow-sm shrink-0 cursor-pointer ${
+                          className={`px-3.5 py-2 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all shadow-sm shrink-0 cursor-pointer select-none ${
                             isHd
                               ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white disabled:bg-blue-400'
                               : 'bg-slate-800 hover:bg-slate-900 active:bg-black text-white disabled:bg-slate-500'
