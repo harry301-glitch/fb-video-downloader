@@ -62,7 +62,7 @@ export function HomePage() {
           </h1>
 
           <p className="mt-4 text-base sm:text-xl text-slate-600 max-w-2xl mx-auto font-normal">
-            Download publicly accessible Facebook videos quickly and easily.
+            Fast, reliable Facebook video downloads with a simple and seamless experience.
           </p>
 
           {/* Main Downloader Tool Card */}
