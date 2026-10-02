@@ -83,17 +83,6 @@ export function Footer() {
                   Disclaimer
                 </Link>
               </li>
-              <li className="pt-2">
-                <a
-                  href="https://github.com/harry301-glitch/fb-video-downloader"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
-                >
-                  <span>GitHub Repository</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              </li>
             </ul>
           </div>
         </div>

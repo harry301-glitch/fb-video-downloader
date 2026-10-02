@@ -2,9 +2,6 @@
 
 A modern, fast, mobile-first, and SEO-optimized web application built to download publicly accessible Facebook videos and reels in HD (1080p/720p) and SD MP4 formats.
 
-Connected GitHub Repository:  
-[https://github.com/harry301-glitch/fb-video-downloader](https://github.com/harry301-glitch/fb-video-downloader)
-
 ---
 
 ## Table of Contents
@@ -123,7 +120,7 @@ Connected GitHub Repository:
 
 ```bash
 # Clone the repository
-git clone https://github.com/harry301-glitch/fb-video-downloader.git
+git clone <repository-url>
 cd fb-video-downloader
 
 # Install dependencies
@@ -267,8 +264,7 @@ This project is pre-configured for instant zero-configuration deployment to Netl
 
 1. Log in to [Netlify](https://www.netlify.com).
 2. Click **Add new site** > **Import an existing project**.
-3. Connect your GitHub account and select:
-   `https://github.com/harry301-glitch/fb-video-downloader`
+3. Connect your Git repository.
 4. Netlify will automatically detect settings from `netlify.toml`:
    - **Build command**: `npm run build`
    - **Publish directory**: `dist`
@@ -280,22 +276,19 @@ This project is pre-configured for instant zero-configuration deployment to Netl
 
 ---
 
-## 11. GitHub Workflow
+## 11. Git Workflow
 
-To sync updates to your GitHub repository:
+To sync updates to your Git repository:
 
 ```bash
 # Add all files
 git add .
 
 # Commit changes
-git commit -m "feat: complete production-ready Facebook Video Downloader"
-
-# Set remote if not already configured
-git remote add origin https://github.com/harry301-glitch/fb-video-downloader.git
+git commit -m "feat: updates"
 
 # Push to main branch
-git push -u origin main
+git push origin main
 ```
 
 Whenever you push to `main`, Netlify automatically builds and redeploys the site.
