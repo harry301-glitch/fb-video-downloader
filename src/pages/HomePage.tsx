@@ -336,8 +336,9 @@ export function HomePage() {
         </div>
 
         {/* 7. Desktop sidebar advertisement where there is enough space */}
-        <aside className="hidden xl:block w-[160px] shrink-0 sticky top-24 self-start pt-6">
+        <aside className="hidden xl:block w-[160px] shrink-0 sticky top-24 self-start pt-6 space-y-6">
           <AdContainer slot="DESKTOP_SIDEBAR" format="skyscraper" />
+          <AdContainer slot="DESKTOP_SIDEBAR" format="skyscraper_compact" />
         </aside>
       </div>
     </div>

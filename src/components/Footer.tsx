@@ -98,6 +98,22 @@ export function Footer() {
           </div>
         </div>
 
+        {/* Sponsored Partner Offers (Smartlink) */}
+        <div className="py-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            Sponsored Partner Offers:
+          </span>
+          <a
+            href="https://www.profitableratecpmnetwork.com/aqzkxztmz?key=1087b3c02c9711fab46af433b46bf244"
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            className="inline-flex items-center gap-1.5 text-blue-400 hover:text-blue-300 transition-colors bg-slate-800/60 hover:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700/60"
+          >
+            <span>Explore Trending Online Tools & Offers</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </div>
+
         {/* Legal Disclaimer Box */}
         <div className="py-6 text-xs text-slate-400 border-b border-slate-800 leading-relaxed">
           <p>
